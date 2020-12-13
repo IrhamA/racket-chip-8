@@ -27,3 +27,10 @@
 
 ;; We need some way to output an image to the screen, likely (require sgl)
 ;; Except, keyboard input must be handled by racket/gui/base so
+
+
+
+;; yo
+
+
+
