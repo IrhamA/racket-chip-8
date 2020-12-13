@@ -1,6 +1,8 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-advanced-reader.ss" "lang")((modname emul) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
+;;------------------------------------------------------------------------------
+
 ;; Some code here like a string
 (define program (string-append
   "6a026b0c6c3f6d0ca2eadab6dcd66e0022d4660368026060f015f0073000"
@@ -13,24 +15,54 @@
   "126ca2f2fe33f265f12964146500d4557415f229d45500ee808080808080"
   "800000000000"))
 
-;; We need to be able to access the "program" string a byte at a time so we need
-;; (program-first p) and (program-rest p)
-;; Never mind it has to be loaded into ram so we must convert string->vector
+;; A Byte is a Nat in the range [0, 255]
 
-;; We need some way to load this in from a file in the future
-;; Eventually we will read this as numbers, not characters of a string
+;; A Progam is a Str
 
-;; We need some way to store the register information, maybe we could use
-;; (define-struct) or (class)
+;; A Ram is a (vectorof Byte)
+(define ram (make-vector 4096 0))
 
-;; We need some way to store RAM data maybe (vector)
+;;------------------------------------------------------------------------------
 
-;; We need some way to output an image to the screen, likely (require sgl)
-;; Except, keyboard input must be handled by racket/gui/base so
+;; (load-program! p n r) consumes a program (p) a number (n) and Ram (r) and
+;; inserts the converted (p) into the right spot at (n) in (r)
 
+;; load-program!: Program Nat Ram -> Void
+(define (load-program! p n r)
+  (cond [(string=? p "") 0]
+        [(> (+ n (/ (string-length p) 2)) 4096)
+         (error "Program cannot be loaded into memory at specified location")]
+        [else (begin (vector-set! r n (hex->num (substring p 0 2)))
+                     (load-program! (substring p 2 (string-length p))
+                                    (add1 n) r))]))
 
+(check-error (load-program! p 5555555 ram))
 
-;; yo
+;;------------------------------------------------------------------------------
 
+;; (hex->num str) consumes a string (str) and returns the hex value of (str)
+;; hex->num: Str -> Nat
+(define (hex->num str)
+  (let (;; (char->num char) takes str (char) and produces corresponding hex num
+        ;; char->num: Str -> Nat
+        [char->num (λ (char)
+          (cond [(string=? "a" char) 10]
+                [(string=? "b" char) 11]
+                [(string=? "c" char) 12]
+                [(string=? "d" char) 13]
+                [(string=? "e" char) 14]
+                [(string=? "f" char) 15]
+                [else (string->number char)]))])
+    
+  (cond [(string=? str "") 0]
+        [else (+ (* (expt 16 (string-length (substring str 1 (string-length str))))
+                    (char->num (substring str 0 1)))
+                 (hex->num (substring str 1 (string-length str))))])))
 
+;; Tests
+(check-expect (hex->num "1af31b") 1766171)
+(check-expect (hex->num "ba") 186)
+(check-expect (hex->num "cc") 204)
+(check-expect (hex->num "de4") 3556)
 
+;;------------------------------------------------------------------------------
