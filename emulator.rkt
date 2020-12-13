@@ -1,14 +1,15 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname emul) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname emulator) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ;;------------------------------------------------------------------------------
 
 ;; A Byte is a Nat in the range [0, 255]
 ;; A Word is a Nat in the range [0, 65535]
 
+;; A Program is a Str
+
 ;;------------------------------------------------------------------------------
 
-;; A Program is a Str
 (define pong (string-append
   "6a026b0c6c3f6d0ca2eadab6dcd66e0022d4660368026060f015f0073000"
   "121ac717770869ffa2f0d671a2eadab6dcd66001e0a17bfe6004e0a17b02"
@@ -30,7 +31,7 @@
                           v0 v1 v2 v3 v4 v5 v6 v7
                           v8 v9 va vb vc vd ve vf))
 
-;; (registers-vn registers ref) returns the n-th register
+;; (registers-vn registers ref) returns the n-th register of a Registers
 ;; registers-vn: Registers Nat -> Byte
 ;; Requires:
 ;;     0 <= n <= 15
@@ -53,7 +54,7 @@
           [(15) (registers-vf registers)]))
 ;; To-do: is there a nice define-syntax way to do this?
 
-;; (register-set! registers n val) sets the value of the n-th register
+;; (register-set! registers n val) sets the value in register n of a Registers
 ;; register-set!: Registers Nat Byte -> Void
 ;; Requires:
 ;;     0 <= n <= 15
@@ -61,32 +62,53 @@
 
 ;;------------------------------------------------------------------------------
 
+;; The standard RAM size for CHIP-8 is 4K
+(define max-ram 4096)
+
 ;; A Ram is a (vectorof Byte)
-(define ram (make-vector 4096 0))
+(define make-ram (λ () (make-vector max-ram 0)))
+
+;; To-do: these are just wrappers but they might be useful if we switch to a
+;; using structs for Ram
+
+;; (ram-set! ram offset val) sets the specified value in a Ram
+;; ram-set!: Ram Nat Byte -> Void
+(define (ram-set! ram offset val)
+  (vector-set! ram offset val))
+
+;; (ram-ref ram n) returns the n-th byte in Ram
+;; ram-ref: Ram Nat -> Byte
+(define (ram-ref ram n)
+  (vector-ref ram n))
+
+;; Test Ram
+(define ram (make-ram))
 
 ;;------------------------------------------------------------------------------
 
-;; (load-program! p n r) consumes a program (p) a number (n) and Ram (r) and
-;; inserts the converted (p) into the right spot at (n) in (r)
-
+;; (load-program! program offset ram) consumes a Program and an offset number
+;; and loads the program into RAM at that offset
 ;; load-program!: Program Nat Ram -> Void
-(define (load-program! p n r)
-  (cond [(string=? p "") 0]
-        [(> (+ n (/ (string-length p) 2)) 4096)
-         (error "Program cannot be loaded into memory at specified location")]
-        [else (begin (vector-set! r n (hex->num (substring p 0 2)))
-                     (load-program! (substring p 2 (string-length p))
-                                    (add1 n) r))]))
+(define (load-program! program offset ram)
+  (cond [(string=? program "") 0]
+        [(> (+ offset (/ (string-length program) 2)) max-ram)
+         (error 'load-program! "program can't be loaded into memory at +" offset)]
+        [else (begin (ram-set! ram offset (hex->num (substring program 0 2)))
+                     (load-program! (substring program 2 (string-length program))
+                                    (add1 offset) ram))]))
 
-(check-error (load-program! p 5555555 ram))
+(check-error (load-program! p 5555555 (make-ram)))
 
 ;;------------------------------------------------------------------------------
 
 ;; (hex->num str) consumes a string (str) and returns the hex value of (str)
 ;; hex->num: Str -> Nat
 (define (hex->num str)
-  (let (;; (char->num char) takes str (char) and produces corresponding hex num
+  (let (;; (char->num char) takes a string of length 1 (char) and produces its
+        ;; corrsesponding hex value
         ;; char->num: Str -> Nat
+        ;; Requires:
+        ;;     (length char) = 1
         [char->num (λ (char)
           (cond [(string=? "a" char) 10]
                 [(string=? "b" char) 11]
