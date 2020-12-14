@@ -1,5 +1,7 @@
 #lang racket
 
+(require "registers.rkt")
+
 (provide (all-defined-out))
 
 ;;------------------------------------------------------------------------------
@@ -8,7 +10,7 @@
 ;;
 ;; opcode_0nnn: Ram Registers -> Void
 (define (opcode_00n0 ram registers)
-  (void)) ;; Remove this void when you write the function body
+  (void))
 
 ;;------------------------------------------------------------------------------
 
@@ -30,9 +32,9 @@
 
 ;; (opcode_1nnn ram registers) jumps addess to NNN
 ;;
-;; opcode_1nnn: Ram Registers -> Void
-(define (opcode_1nnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode_1nnn: Ram Registers Word -> Registers
+(define (opcode_1nnn ram reg nnn)
+  (struct-copy registers reg [pc nnn]))
 
 ;;------------------------------------------------------------------------------
 

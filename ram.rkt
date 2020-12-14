@@ -2,6 +2,7 @@
 
 ;; For (check-expect)s
 (require test-engine/racket-tests)
+(require "util.rkt")
 
 (provide (all-defined-out))
 
