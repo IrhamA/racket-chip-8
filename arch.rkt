@@ -109,12 +109,12 @@
 ;; Requires:
 ;;     (length char) = 1
 (define (char->dec char)
-  (cond [(equal? #\a char) 10]
-        [(equal? #\b char) 11]
-        [(equal? #\c char) 12]
-        [(equal? #\d char) 13]
-        [(equal? #\e char) 14]
-        [(equal? #\f char) 15]
+  (cond [(char=? #\a char) 10]
+        [(char=? #\b char) 11]
+        [(char=? #\c char) 12]
+        [(char=? #\d char) 13]
+        [(char=? #\e char) 14]
+        [(char=? #\f char) 15]
         [else (- (char->integer char) (char->integer #\0))]))
 
 ;; Tests:
