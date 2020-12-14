@@ -1,6 +1,18 @@
 #lang racket
 
-(require "arch.rkt")
+;; To-do: Maybe we should stop doing all this (begin ...) and Void and #:mutable
+;; stuff. It may make the program easier to write but it's unracketlike
+
+;;------------------------------------------------------------------------------
+
+;; A Byte is a Nat in the range [0, 255]
+;; A Word is a Nat in the range [0, 65535]
+
+;; A HexChar is one of:
+;;     #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f
+;; A HexStr is a string consisting only of HexChars
+
+;; A Program is a HexStr
 
 ;;------------------------------------------------------------------------------
 

@@ -1,9 +1,5 @@
 #lang racket
 
-;; Allows you to access functions from "arch.rkt"
-(require "arch.rkt")
-
-;; Required to make these functions accessible in other files
 (provide (all-defined-out))
 
 ;;------------------------------------------------------------------------------
