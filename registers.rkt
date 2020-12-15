@@ -6,7 +6,7 @@
 
 ;; A Registers is a
 ;; (make-registers Word Word Byte Byte Byte (vectorof Byte)
-(define-struct registers (pc i sp dt st v) #:mutable #:transparent)
+(define-struct registers (pc i sp dt st v) #:transparent)
 
 ;; (registers-vn reg n) returns the vn register of a Registers
 ;; registers-vn: Registers Nat -> Byte
@@ -15,14 +15,13 @@
 (define (registers-vn reg n)
   (vector-ref (registers-v reg) n))
 
-;; (set-registers-vn! reg n val) sets the value in vn of a Registers
-;; set-registers-vn!: Registers Nat Byte -> Registers
+;; (registers-vn-set reg n val) returns the Registers with register vn updated
+;; registers-vn-set: Registers Nat Byte -> Registers
 ;; Requires:
 ;;     0 <= n <= 15
-(define (set-registers-vn reg n val)
-  (struct-copy registers reg [v
-    (vector-append (vector-take (registers-v reg) (sub1 n))
-                   (vector val)
-                   (vector-drop (registers-v reg) n))]))
+(define (registers-vn-set reg n val)
+  (struct-copy registers reg
+    [v (vector-append (vector-take (registers-v reg) (sub1 n)) (vector val)
+                      (vector-drop (registers-v reg) n))]))
 
 ;;------------------------------------------------------------------------------

@@ -17,33 +17,34 @@
 ;; To-do: these are just wrappers but they might be useful if we switch to a
 ;; using structs for Ram
 
-;; (ram-set! ram offset val) sets the specified value in a Ram
-;; ram-set!: Ram Nat Byte -> Void
-(define (ram-set! ram offset val)
-  (vector-set! ram offset val))
+;; (ram-set! ram offset val) returns Ram with the given offset byte set to val
+;; ram-set!: Ram Nat Byte -> Ram
+(define (ram-set ram offset val)
+  (vector-append (vector-take ram (sub1 offset)) (vector val)
+                 (vector-drop ram offset)))
 
 ;; (ram-ref ram n) returns the n-th byte in Ram
 ;; ram-ref: Ram Nat -> Byte
-(define (ram-ref ram n)
-  (vector-ref ram n))
+(define ram-ref vector-ref)
 
-;; Test Ram
-(define ram (make-ram))
+;; (ram-size ram) returns the length of Ram
+;; ram-size: Ram -> Nat
+(define ram-size vector-length)
 
 ;;------------------------------------------------------------------------------
 
-;; (load-program! program offset ram) consumes a Program and an offset number
-;; and loads the program into RAM at that offset
-;; load-program!: Program Nat Ram -> Void
-(define (load-program! program offset ram)
-  (cond [(string=? program "") 0]
-        [(> (+ offset (/ (string-length program) 2)) max-ram)
-         (error 'load-program! "program can't be loaded into memory at +" offset)]
-        [else (begin (ram-set! ram offset (hex->dec (substring program 0 2)))
-                     (load-program! (substring program 2 (string-length program))
-                                    (add1 offset) ram))]))
+;; (load-program program offset ram) consumes a Program and an offset number
+;; and returns Ram with the Program loaded in decimal at that offset
+;; load-program: Program Nat Ram -> Ram
+(define (load-program program offset ram)
+  (cond [(string=? program "") ram]
+        [(> (+ offset (/ (string-length program) 2)) (ram-size ram))
+         (error 'load-program "program can't be loaded into memory at +" offset)]
+        [else (load-program
+                (substring program 2) (string-length program) (add1 offset)
+                (ram-set ram offset (hex->dec (substring program 0 2))))]))
 
 ;; Tests:
-(check-error (load-program! p 5555555 (make-ram)))
+(check-error (load-program p 5555555 (make-ram)))
 
 ;;------------------------------------------------------------------------------
