@@ -18,16 +18,19 @@
 ;; using structs for Ram
 
 ;; (ram-set! ram offset val) returns Ram with the given offset byte set to val
+
 ;; ram-set!: Ram Nat Byte -> Ram
 (define (ram-set ram offset val)
   (vector-append (vector-take ram (sub1 offset)) (vector val)
                  (vector-drop ram offset)))
 
 ;; (ram-ref ram n) returns the n-th byte in Ram
+
 ;; ram-ref: Ram Nat -> Byte
 (define ram-ref vector-ref)
 
 ;; (ram-size ram) returns the length of Ram
+
 ;; ram-size: Ram -> Nat
 (define ram-size vector-length)
 
@@ -35,6 +38,7 @@
 
 ;; (load-program program offset ram) consumes a Program and an offset number
 ;; and returns Ram with the Program loaded in decimal at that offset
+
 ;; load-program: Program Nat Ram -> Ram
 (define (load-program program offset ram)
   (cond [(string=? program "") ram]

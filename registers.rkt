@@ -10,6 +10,7 @@
 
 ;; (registers-vn reg n) returns the vn register of a Registers
 ;; registers-vn: Registers Nat -> Byte
+
 ;; Requires:
 ;;     0 <= n <= 15
 (define (registers-vn reg n)
@@ -17,6 +18,7 @@
 
 ;; (registers-vn-set reg n val) returns the Registers with register vn updated
 ;; registers-vn-set: Registers Nat Byte -> Registers
+
 ;; Requires:
 ;;     0 <= n <= 15
 (define (registers-vn-set reg n val)
