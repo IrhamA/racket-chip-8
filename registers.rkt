@@ -8,6 +8,13 @@
 ;; (make-registers Word Word Byte Byte Byte (vectorof Byte)
 (define-struct registers (pc i sp dt st v) #:transparent)
 
+;; The structure fields correspond to these registers:
+;; pc ... Program Counter
+;; i .... Index register
+;; sp ... Stack Pointer
+;; dt ... Delay Timer
+;; st ... Sound Timer
+
 ;; (registers-vn reg n) returns the vn register of a Registers
 ;; registers-vn: Registers Nat -> Byte
 

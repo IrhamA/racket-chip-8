@@ -33,12 +33,12 @@
 
 ;; char->dec HexChar -> Nat
 (define (char->dec char)
-  (cond [(char=? #\a char) 10]
-        [(char=? #\b char) 11]
-        [(char=? #\c char) 12]
-        [(char=? #\d char) 13]
-        [(char=? #\e char) 14]
-        [(char=? #\f char) 15]
+  (cond [(char=? #\a char) #xa]
+        [(char=? #\b char) #xb]
+        [(char=? #\c char) #xc]
+        [(char=? #\d char) #xd]
+        [(char=? #\e char) #xe]
+        [(char=? #\f char) #xf]
         [else (- (char->integer char) (char->integer #\0))]))
 
 ;; Tests:
@@ -46,6 +46,22 @@
 (check-expect (char->dec #\9) 9)
 (check-expect (char->dec #\a) 10)
 (check-expect (char->dec #\f) 15)
+
+;;------------------------------------------------------------------------------
+
+;; (dec->hex num) converts a decimal number to a string of hexadecimal chars,
+;; If the string is less than one byte then it is formatted as two chars 
+
+;; dec->hex Nat -> HexStr
+(define (dec->hex num)
+  (let ([str (number->string num 16)])
+    (if (< (string-length str) 2)
+        (string-append "0" str) str)))
+  
+
+;; Tests:
+(check-expect (dec->hex 65535) "ffff")
+(check-expect (dec->hex 1766171) "1af31b")
 
 ;;------------------------------------------------------------------------------
 

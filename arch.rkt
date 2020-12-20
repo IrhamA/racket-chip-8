@@ -9,6 +9,7 @@
 ;;------------------------------------------------------------------------------
 
 ;; (cpu ram registers) simulates one clock cycle of the CHIP-8 cpu
+;; To-do: This is the worst thing I have ever seen or written in Racket
 
 ;; cpu: Ram Registers -> Ram Registers
 (define (cpu ram registers)
@@ -19,36 +20,38 @@
           [((pred-mnnn #x0) opcode) (opcode-0nnn ram registers opcode)] ; 0nnn
           [((pred-mnnn #x1) opcode) (opcode-1nnn ram registers (modulo opcode #x1000))] ; 1nnn
           [((pred-mnnn #x2) opcode) (opcode-2nnn ram registers (modulo opcode #x2000))] ; 2nnn 
-          [((pred-mnnn #x3) opcode) (opcode-3xnn ram registers (modulo opcode #x3000))] ; 3xnn
-          [((pred-mnnn #x4) opcode) (void)] ; 4xnn
-          [((pred-pnnq #x5 #x0) opcode)] ; 5xy0
-          [((pred-mnnn #x6) opcode) (void)] ; 6xnn
-          [((pred-mnnn #x7) opcode) (void)] ; 7xnn
-          [((pred-pnnq #x8 #x0) opcode) (void)] ; 8xy0
-          [((pred-pnnq #x8 #x1) opcode) (void)] ; 8xy1
-          [((pred-pnnq #x8 #x2) opcode) (void)] ; 8xy2
-          [((pred-pnnq #x8 #x3) opcode) (void)] ; 8xy3
-          [((pred-pnnq #x8 #x4) opcode) (void)] ; 8xy4
-          [((pred-pnnq #x8 #x5) opcode) (void)] ; 8xy5
-          [((pred-pnnq #x8 #x6) opcode) (void)] ; 8xy6
-          [((pred-pnnq #x8 #x7) opcode) (void)] ; 8xy7
-          [((pred-pnnq #x8 #xe) opcode) (void)] ; 8xye
-          [((pred-pnnq #x9 #x0) opcode) (void)] ; 9xy0
+          [((pred-mnnn #x3) opcode) (opcode-3xnn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 3xnn
+          [((pred-mnnn #x4) opcode) (opcode-4xnn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 4xnn
+          [((pred-pnnq #x5 #x0) opcode) (opcode-5xy0 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 5xy0
+          [((pred-mnnn #x6) opcode) (opcode-6xnn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 6xnn
+          [((pred-mnnn #x7) opcode) (opcode-7xnn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 7xnn
+          [((pred-pnnq #x8 #x0) opcode) (opcode-8xy0 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy0
+          [((pred-pnnq #x8 #x1) opcode) (opcode-8xy1 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy1
+          [((pred-pnnq #x8 #x2) opcode) (opcode-8xy2 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy2
+          [((pred-pnnq #x8 #x3) opcode) (opcode-8xy3 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy3
+          [((pred-pnnq #x8 #x4) opcode) (opcode-8xy4 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy4
+          [((pred-pnnq #x8 #x5) opcode) (opcode-8xy5 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy5
+          [((pred-pnnq #x8 #x6) opcode) (opcode-8xy6 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy6
+          [((pred-pnnq #x8 #x7) opcode) (opcode-8xy7 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xy7
+          [((pred-pnnq #x8 #xe) opcode) (opcode-8xye ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 8xye
+          [((pred-pnnq #x9 #x0) opcode) (opcode-9xy0 ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 9xy0
           [((pred-mnnn #xa) opcode) (opcode-annn ram registers (modulo opcode #xa000))] ; annn
           [((pred-mnnn #xb) opcode) (opcode-bnnn ram registers (modulo opcode #xb000))] ; bnnn
-          [((pred-mnnn #xc) opcode) (void)] ; cxnn
-          [((pred-mnnn #xd) opcode) (void)] ; dxyn
-          [((pred-sxtt #xe #x9e) opcode) (void)] ; ex9e
-          [((pred-sxtt #xe #xa1) opcode) (void)] ; exa1
-          [((pred-sxtt #xf #x07) opcode) (void)] ; fx07
-          [((pred-sxtt #xf #x0a) opcode) (void)] ; fx0a
-          [((pred-sxtt #xf #x15) opcode) (void)] ; fx15
-          [((pred-sxtt #xf #x18) opcode) (void)] ; fx18
-          [((pred-sxtt #xf #x1e) opcode) (void)] ; fx1e
-          [((pred-sxtt #xf #x29) opcode) (void)] ; fx29
-          [((pred-sxtt #xf #x33) opcode) (void)] ; fx33
-          [((pred-sxtt #xf #x55) opcode) (void)] ; fx55
-          [((pred-sxtt #xf #x65) opcode) (void)]))) ; ex9e
+          [((pred-mnnn #xc) opcode) (opcode-cxnn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; cxnn
+          [((pred-mnnn #xd) opcode) (opcode-dxyn ram registers (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010) (bitwise-and opcode #x000f))] ; dxyn
+          [((pred-sxtt #xe #x9e) opcode) (opcode-ex9e ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; ex9e
+          [((pred-sxtt #xe #xa1) opcode) (opcode-exa1 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; exa1
+          [((pred-sxtt #xf #x07) opcode) (opcode-fx07 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx07
+          [((pred-sxtt #xf #x0a) opcode) (opcode-fx0a ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx0a
+          [((pred-sxtt #xf #x15) opcode) (opcode-fx15 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx15
+          [((pred-sxtt #xf #x18) opcode) (opcode-fx18 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx18
+          [((pred-sxtt #xf #x1e) opcode) (opcode-fx1e ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx1e
+          [((pred-sxtt #xf #x29) opcode) (opcode-fx29 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx29
+          [((pred-sxtt #xf #x33) opcode) (opcode-fx33 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx33
+          [((pred-sxtt #xf #x55) opcode) (opcode-fx55 ram registers (/ (bitwise-and opcode #x0f00) #x0100))] ; fx55
+          [((pred-sxtt #xf #x65) opcode) (opcode-fx65 ram registers (/ (bitwise-and opcode #x0f00) #x0100))]))) ; fx65
+
+;;------------------------------------------------------------------------------
 
 ;; (pred-mnnn m) returns a predicate that checks if the opcode is of the form
 ;; mnnn where m is a constant
@@ -59,6 +62,8 @@
     (and (<= opcode (+ (* m #x1000) #x0fff))
          (>= opcode (* m #x1000)))))
 
+;;------------------------------------------------------------------------------
+
 ;; (pred-pnnq p q) returns a predicate that checks if the opcode is of the form
 ;; pnnq where p and q are constants
 
@@ -68,6 +73,8 @@
     (and (<= opcode (+ (* p #x1000) #x0ff0 q))
          (>= opcode (+ (* p #x1000) q)))))
 
+;;------------------------------------------------------------------------------
+
 ;; (pred-sxtt) returns a predicate that checks if the opcode is of the form sxtt
 ;; where s and tt are constants
 
@@ -76,3 +83,5 @@
   (λ (opcode)
     (and (<= opcode (+ (* s #x1000) #x0f00 tt))
          (>= opcode (+ (* s #x1000) tt)))))
+
+;;------------------------------------------------------------------------------

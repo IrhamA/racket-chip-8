@@ -1,4 +1,7 @@
-#lang racket
+#lang racket/gui
+
+(require "ram.rkt")
+(require "util.rkt")
 
 ;; To-do: Maybe we should stop doing all this (begin ...) and Void and #:mutable
 ;; stuff. It may make the program easier to write but it's unracketlike
@@ -30,4 +33,43 @@
 ;;------------------------------------------------------------------------------
 
 ;; Test Ram
-;; (define ram (make-ram))
+(define ram (make-ram))
+
+;; Ram Viewer window
+(define ram-viewer
+  (new frame% [label "racket-chip-8: ram-viewer"]
+              [width 1010]
+              [height 580]))
+
+;; Creating a new canvas to print out all ram values
+(define ram-canvas
+  (new canvas% [parent ram-viewer] [paint-callback
+    (λ (canvas context)
+      (send context set-font (make-font #:size 8))
+      (send context set-text-foreground "white")
+      (draw context ram 0 0))]))
+(send ram-canvas set-canvas-background (make-object color%))
+
+;;------------------------------------------------------------------------------
+
+;; (draw-ram context ram x y) draws the contents of ram as 1-byte strings in a
+;; 64x64 byte grid to the given device context, starting at position (x, y)
+
+;; draw-ram: DC Ram Nat Nat -> Void
+(define (draw-ram context ram x y)
+  (cond [(equal? (+ x (* y 64)) max-ram) ""]
+        [(zero? (modulo (add1 x) 64))
+         (draw-ram context ram (modulo (add1 x) 64) (add1 y))]
+        [else (begin
+          (send context draw-text (dec->hex (ram-ref ram (+ x (* y 64))))
+                (* x 16) (* y 9))
+          (draw-ram context ram (add1 x) y))]))
+
+;;------------------------------------------------------------------------------
+
+;; (step-mode) displays the debug windows to the user and starts the emulator
+;; in stepper mode
+(define (step-mode)
+  (send ram-viewer show #t))
+
+;;------------------------------------------------------------------------------

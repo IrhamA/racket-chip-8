@@ -17,12 +17,12 @@
 ;; To-do: these are just wrappers but they might be useful if we switch to a
 ;; using structs for Ram
 
-;; (ram-set! ram offset val) returns Ram with the given offset byte set to val
+;; (ram-set ram offset val) returns Ram with the given offset byte set to val
 
-;; ram-set!: Ram Nat Byte -> Ram
+;; ram-set: Ram Nat Byte -> Ram
 (define (ram-set ram offset val)
-  (vector-append (vector-take ram (sub1 offset)) (vector val)
-                 (vector-drop ram offset)))
+  (vector-append (vector-take ram offset) (vector val)
+                 (vector-drop ram (add1 offset))))
 
 ;; (ram-ref ram n) returns the n-th byte in Ram
 
@@ -45,7 +45,7 @@
         [(> (+ offset (/ (string-length program) 2)) (ram-size ram))
          (error 'load-program "program can't be loaded into memory at +" offset)]
         [else (load-program
-                (substring program 2) (string-length program) (add1 offset)
+                (substring program 2) (add1 offset)
                 (ram-set ram offset (hex->dec (substring program 0 2))))]))
 
 ;; Tests:
