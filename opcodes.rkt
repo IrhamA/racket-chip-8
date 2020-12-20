@@ -1,6 +1,7 @@
 #lang racket
 
 (require "registers.rkt")
+(require "ram.rkt")
 
 (provide (all-defined-out))
 
@@ -22,130 +23,196 @@
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-00ee ram registers) returns from a subroutine
+;; (opcode-00ee ram registers) returns from a subroutine: Sets program counter
+;; to the address at the top of the stack, then sub1 from stack pointer
 
-;; opcode-00ee: Ram Registers -> Void
-(define (opcode-00ee ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-00ee: Ram Registers -> Ram Registers
+(define (opcode-00ee ram reg)
+  (values ram
+          (struct-copy registers reg [pc (ram-ref ram (registers-sp reg))]
+                                     [sp (sub1 (registers-sp reg))])))
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-1nnn ram registers) jumps addess to NNN
+;; (opcode-1nnn ram registers) jumps addess to NNN: Set program counter to NNN
 
 ;; opcode-1nnn: Ram Registers Word -> Ram Registers
-(define (opcode-1nnn ram reg nnn)
-  (struct-copy registers reg [pc nnn]))
+(define (opcode-1nnn ram reg inc nnn)
+  (values ram (struct-copy registers reg [pc nnn])))
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-2nnn ram registers) calls subroutine at NNN
+;; (opcode-2nnn ram registers) calls subroutine at NNN: Increments the stack
+;; pointer, then puts the current PC on the top of the stack. The PC is then
+;; set to nnn.
 
-;; opcode-2nnn: Ram Registers -> Void
-(define (opcode-2nnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-2nnn: Ram Registers -> Ram Registers
+(define (opcode-2nnn ram reg nnn)
+  (values (ram-set ram (registers-sp reg) (registers-pc reg))
+          (struct-copy registers reg [sp (add1 (registers-sp reg))]
+                                     [pc nnn])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-3xnn ram registers) skips the next instruction if VX equals NN
 ;; (Usually the next instruction is a jump to skip a code block)
+;; Skip next instruction if Vx = kk. The interpreter compares register Vx to
+;; kk, and if they are equal, increments the program counter by 2
 
-;; opcode-3xnn: Ram Registers -> Void
-(define (opcode-3xnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-3xnn: Ram Registers Byte Byte -> Void
+(define (opcode-3xnn ram reg x nn)
+  (if (equal? (vector-ref (registers-v reg) x) nn)
+      (struct-copy registers reg [pc (+ 2 (registers-pc reg))])      
+      (values ram reg)))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-4xnn ram registers) skips the next instruction if VX doesn't equal NN
 ;; (Usually the next instruction is a jump to skip a code block)
 
-;; opcode-4xnn: Ram Registers -> Void
-(define (opcode-4xnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-4xnn: Ram Registers Byte Byte -> Void
+(define (opcode-4xnn ram reg x nn)
+  (if (not (equal? (vector-ref (registers-v reg) x) nn))
+      (struct-copy registers reg [pc (+ 2 (registers-pc reg))])     
+      (values ram reg)))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-5xy0 ram registers) skips the next instruction if VX equals VY.
 ;; (Usually the next instruction is a jump to skip a code block)
+;; Skip next instruction if Vx = Vy. The interpreter compares register Vx to
+;; register Vy, and if they are equal, increments the program counter by 2.
 
-;; opcode-5xy0: Ram Registers -> Void
-(define (opcode-5xy0 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-5xy0: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-5xy0 ram reg x y)
+  (if (equal? (vector-ref (registers-v reg) x) (vector-ref (registers-v reg) y))
+      (struct-copy registers reg [pc (+ 2 (registers-pc reg))])      
+      (values ram reg)))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-6xnn ram registers) sets VX to NN
 
-;; opcode-6xnn: Ram Registers -> Void
-(define (opcode-6xnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-6xnn: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-6xnn ram reg x nn)
+  (values ram (registers-vn-set reg x nn)))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-7xnn ram registers) adds NN to VX (Carry Flag is not changed)
+;; Set Vx = Vx + kk. Adds the value kk to the value of register Vx,
+;; then stores the result in Vx.
 
-;; opcode-7xnn: Ram Registers -> Void
-(define (opcode-7xnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-7xnn: Ram Registers Byte Byte -> Ram Registers 
+(define (opcode-7xnn ram reg x nn)
+  (values ram (struct-copy registers reg
+                           [v (registers-vn-set reg x (+ x nn))])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8xy0 ram registers) sets VX to the value of VY
+;; Set Vx = Vy. Stores the value of register Vy in register Vx.
 
-;; opcode-8xy0: Ram Registers -> Void
-(define (opcode-8xy0 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xy0: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy0 ram reg x y)
+  (values ram (struct-copy registers reg
+                           [v (registers-vn-set reg x (registers-vn reg y))])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8xy1 ram registers) sets VX to VX or VY
+;; Set Vx = Vx OR Vy. Performs a bitwise OR on the values of Vx and Vy,
+;; then stores the result in Vx. A bitwise OR compares the corresponding bits
+;; from two values, and if either bit is 1, then the same bit in the result is
+;; also 1. Otherwise, it is 0.
 
-;; opcode-8xy1: Ram Registers -> Void
-(define (opcode-8xy1 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xy1: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy1 ram reg x y)
+  (values ram
+          (struct-copy registers reg
+                       [v (registers-vn-set reg x
+                               (bitwise-ior (registers-vn reg x)
+                                            (registers-vn reg y)))])))
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-8xy2 ram registers) sets VX to VX and VY
+;; (opcode-8xy2 ram registers) sets VX to VX and VY: bitwise-and this
 
-;; opcode-8xy2: Ram Registers -> Void
-(define (opcode-8xy2 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xy2: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy2 ram reg x y)
+  (values ram
+          (struct-copy registers reg
+                       [v (registers-vn-set reg x
+                               (bitwise-and (registers-vn reg x)
+                                            (registers-vn reg y)))])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8xy3 ram registers) sets VX to VX xor VY
 
-;; opcode-8xy3: Ram Registers -> Void
-(define (opcode-8xy3 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xy3: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy3 ram reg x y)
+  (values ram
+          (struct-copy registers reg
+                       [v (registers-vn-set reg x
+                               (bitwise-xor (registers-vn reg x)
+                                            (registers-vn reg y)))])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8xy4 ram registers) adds VY to VX. VF is set to 1 when there's a
 ;; carry, and to 0 when there isn't.
 
-;; opcode-8xy4: Ram Registers -> Void
-(define (opcode-8xy4 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xy4: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy4 ram reg x y f)
+  (local [(define x+y (+ (registers-vn x) (registers-vn y)))]
+      (values ram
+          (struct-copy registers reg
+                       [v (if (> x+y 255)
+                              (registers-vn-set
+                               (registers-vn-set reg x
+                                                 (if (> x+y 255) 255 x+y))
+                               #xf 1)
+                              (registers-vn-set
+                               (registers-vn-set reg x
+                                                 (if (> x+y 255) 255 x+y))
+                               #xf 0))]))))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8XY5 ram registers) VY is subtracted from VX. VF is set to 0 when
 ;; there's a borrow, and 1 when there isn't.
 
-;; opcode-8XY5: Ram Registers -> Void
-(define (opcode-8XY5 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8XY5: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8XY5 ram reg x y)
+  (local [(define x-y (- (registers-vn x) (registers-vn y)))]
+      (values ram
+          (struct-copy registers reg
+                       [v (if (> (registers-vn x) (registers-vn y))
+                                 (registers-vn-set
+                                  (registers-vn-set reg x
+                                                    (if (< x-y 0) 0 x-y))
+                                  #xf 1)
+                                (registers-vn-set
+                                 (registers-vn-set reg x
+                                                   (if (< x-y 0) 0 x-y))
+                                 #xf 0))]))))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8XY6 ram registers) stores the least significant bit of VX in VF
 ;; and then shifts VX to the right by 1
 
-;; opcode-8XY6: Ram Registers -> Void
-(define (opcode-8XY6 ram registers)
-  (void)) ;; Remove this void when you write the function body
-
+;; opcode-8XY6: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8XY6 ram reg x y)
+  (if (odd? (registers-vn reg x))
+      (struct-copy registers reg
+                   [v (registers-vn-set reg #xf 1)])
+      (struct-copy registers reg
+                   [v (registers-vn-set (registers-vn-set reg #xf 0)
+                                        x
+                                        (/ (registers-vn reg x) 2))])))
+                   
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8XY7 ram registers) sets VX to VY minus VX. VF is set to 0 when
