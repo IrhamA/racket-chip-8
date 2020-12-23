@@ -19,10 +19,8 @@
 
 ;; (ram-set ram offset val) returns Ram with the given offset byte set to val
 
-;; ram-set: Ram Nat Byte -> Ram
-(define (ram-set ram offset val)
-  (vector-append (vector-take ram offset) (vector val)
-                 (vector-drop ram (add1 offset))))
+;; ram-set: Ram Nat Byte -> Void
+(define ram-set! vector-set!)
 
 ;; (ram-ref ram n) returns the n-th byte in Ram
 
@@ -44,9 +42,9 @@
   (cond [(string=? program "") ram]
         [(> (+ offset (/ (string-length program) 2)) (ram-size ram))
          (error 'load-program "program can't be loaded into memory at +" offset)]
-        [else (load-program
-                (substring program 2) (add1 offset)
-                (ram-set ram offset (hex->dec (substring program 0 2))))]))
+        [else (begin (ram-set! ram offset (hex->dec (substring program 0 2)))
+                     (load-program (substring program 2 (string-length program))
+                                    (add1 offset) ram))]))
 
 ;; Tests:
 (check-error (load-program p 5555555 (make-ram)))

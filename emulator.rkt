@@ -1,7 +1,11 @@
 #lang racket/gui
 
 (require "ram.rkt")
+(require "registers.rkt")
 (require "util.rkt")
+(require "arch.rkt")
+
+(provide (all-defined-out))
 
 ;; To-do: Maybe we should stop doing all this (begin ...) and Void and #:mutable
 ;; stuff. It may make the program easier to write but it's unracketlike
@@ -33,22 +37,10 @@
 ;;------------------------------------------------------------------------------
 
 ;; Test Ram
-(define ram (make-ram))
+(define test-ram (make-vector 4096 0))
 
-;; Ram Viewer window
-(define ram-viewer
-  (new frame% [label "racket-chip-8: ram-viewer"]
-              [width 1010]
-              [height 580]))
-
-;; Creating a new canvas to print out all ram values
-(define ram-canvas
-  (new canvas% [parent ram-viewer] [paint-callback
-    (λ (canvas context)
-      (send context set-font (make-font #:size 8))
-      (send context set-text-foreground "white")
-      (draw context ram 0 0))]))
-(send ram-canvas set-canvas-background (make-object color%))
+;; Test Registers
+(define test-reg (registers 0 0 0 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
 
 ;;------------------------------------------------------------------------------
 
@@ -69,7 +61,17 @@
 
 ;; (step-mode) displays the debug windows to the user and starts the emulator
 ;; in stepper mode
-(define (step-mode)
-  (send ram-viewer show #t))
+(define (step-mode ram)
+  (letrec (;; Ram Viewer window
+           [ram-viewer (new frame% [label "racket-chip-8: ram-viewer"]
+                            [width 1010] [height 580])]
+           ;; Creating a new canvas to draw text
+           [ram-canvas (new canvas% [parent ram-viewer] [paint-callback
+                            (λ (canvas context)
+                              (send context set-font (make-font #:size 8))
+                              (send context set-text-foreground "white")
+                              (draw-ram context ram 0 0))])])
+  (begin (send ram-canvas set-canvas-background (make-object color%))
+         (send ram-viewer show #t))))
 
 ;;------------------------------------------------------------------------------
