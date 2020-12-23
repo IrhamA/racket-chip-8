@@ -184,7 +184,7 @@
 ;; there's a borrow, and 1 when there isn't.
 
 ;; opcode-8XY5: Ram Registers Byte Byte -> Ram Registers
-(define (opcode-8XY5 ram reg x y)
+(define (opcode-8xy5 ram reg x y)
   (local [(define x-y (- (registers-vn x) (registers-vn y)))]
       (values ram
           (struct-copy registers reg
@@ -204,68 +204,90 @@
 ;; and then shifts VX to the right by 1
 
 ;; opcode-8XY6: Ram Registers Byte Byte -> Ram Registers
-(define (opcode-8XY6 ram reg x y)
-  (if (odd? (registers-vn reg x))
-      (struct-copy registers reg
-                   [v (registers-vn-set reg #xf 1)])
-      (struct-copy registers reg
-                   [v (registers-vn-set (registers-vn-set reg #xf 0)
-                                        x
-                                        (/ (registers-vn reg x) 2))])))
+(define (opcode-8xy6 ram reg x y)
+  (values ram
+          (if (odd? (registers-vn reg x))
+              (struct-copy registers reg
+                           [v (registers-vn-set reg #xf 1)])
+              (struct-copy registers reg
+                           [v (registers-vn-set (registers-vn-set reg #xf 0)
+                                                x
+                                                (/ (registers-vn reg x) 2))]))))
                    
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8XY7 ram registers) sets VX to VY minus VX. VF is set to 0 when
 ;; there's a borrow, and 1 when there isn't
 
-;; opcode-8XY7: Ram Registers -> Void
-(define (opcode-8XY7 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8XY7: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xy7 ram reg x y)
+  (local [(define y-x (- (registers-vn y) (registers-vn x)))]
+      (values ram
+          (struct-copy registers reg
+                       [v (if (> (registers-vn y) (registers-vn x))
+                                 (registers-vn-set
+                                  (registers-vn-set reg x
+                                                    (if (< y-x 0) 0 y-x))
+                                  #xf 1)
+                                (registers-vn-set
+                                 (registers-vn-set reg x
+                                                   (if (< y-x 0) 0 y-x))
+                                 #xf 0))]))))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-8xye ram registers) stores the most significant bit of VX in VF
 ;; and then shifts VX to the left by 1
 
-;; opcode-8xyE: Ram Registers -> Void
-(define (opcode-8xyE ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-8xyE: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-8xye ram reg x y)
+  (values ram
+          (if (zero? (bitwise-and 100000000 (registers-vn reg x)))
+              (struct-copy registers reg
+                           [v (registers-vn-set reg #xf 1)])
+              (struct-copy registers reg
+                           [v (registers-vn-set (registers-vn-set reg #xf 0)
+                                                x
+                                                (* (registers-vn reg x) 2))]))))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-9xy0 ram registers) skips the next instruction if VX doesn't
 ;; equal VY. (Usually the next instruction is a jump to skip a code block)
 
-;; opcode-9xy0: Ram Registers -> Void
-(define (opcode-9xy0 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-9xy0: Ram Registers Byte Byte -> Ram Registers
+(define (opcode-9xy0 ram reg x y)
+  (values ram
+          (if (equal? (registers-vn reg y) (registers-vn reg x))
+              reg
+              (struct-copy registers reg [pc (+ 2 (registers-pc reg))]))))           
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-annn ram registers) sets I to the address NNN
 
-;; opcode-annn: Ram Registers -> Void
-(define (opcode-annn ram registers)
-  (void)) ;; Remove this void when you write the function body
-
+;; opcode-annn: Ram Registers Word -> Ram Registers
+(define (opcode-annn ram reg nnn)
+  (values ram (struct-copy registers reg [i nnn])))
+   
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-bnnn ram registers) Jumps to the address NNN plus V0 sets VX
 ;; to the result of a bitwise and operation on a random number
 ;; (Typically: 0 to 255) and NN
 
-;; opcode-bnnn: Ram Registers -> Void
-(define (opcode-bnnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-bnnn: Ram Registers -> Ram Registers
+(define (opcode-bnnn ram reg nnn)
+  (values ram (struct-copy registers reg [pc (+ (registers-vn reg #x0) nnn)])))
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-cxnn ram registers) sets VX to the result of a bitwise and
 ;; operation on a random number (Typically: 0 to 255) and NN
 
-;; opcode-cxnn: Ram Registers -> Void
-(define (opcode-cxnn ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-cxnn: Ram Registers Byte -> Ram Registers
+(define (opcode-cxnn ram reg x nn)
+  (values ram (registers-vn-set reg x (bitwise-and (random 0 255) nn))))
 
 ;;------------------------------------------------------------------------------
 
@@ -294,7 +316,7 @@
 ;; (opcode-exa1 ram registers) skips the next instruction if the key stored in
 ;; VX isn't pressed. (Usually the next instruction is a jump to skip a code block)
 
-;; opcode-exa1: Ram Registers -> Void
+;; opcode-exa1: Ram Registers -> Ram Registers
 (define (opcode-exa1 ram registers)
   (void)) ;; Remove this void when you write the function body
 
@@ -302,26 +324,28 @@
 
 ;; (opcode-fx07 ram registers) sets VX to the value of the delay timer.
 
-;; opcode-fx07: Ram Registers -> Void
-(define (opcode-fx07 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-fx07: Ram Registers Byte -> Ram Registers
+(define (opcode-fx07 ram reg x)
+  (values ram (struct-copy registers reg
+                           [v (registers-vn-set reg x (registers-dt reg))])))  
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-fx0a ram registers) a key press is awaited, and then stored in VX.
 ;; (Blocking Operation. All instruction halted until next key event)
 
-;; opcode-fx0a: Ram Registers -> Void
-(define (opcode-fx0a ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-fx0a: Ram Registers Byte -> Ram Registers
+(define (opcode-fx0a ram reg x)
+  (void))  ;; Remove this void when you write the function body
 
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-fx15 ram registers) sets the delay timer to VX
 
-;; opcode-fx15: Ram Registers -> Void
-(define (opcode-fx15 ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-fx15: Ram Registers Byte -> Ram Registers
+(define (opcode-fx15 ram reg x)
+  (values ram (struct-copy registers reg
+                           [dt (registers-vn reg x)])))
 
 ;;------------------------------------------------------------------------------
 
@@ -335,9 +359,10 @@
 
 ;; (opcode-fx1e ram registers) adds VX to I. VF is not affected
 
-;; opcode-fx1e: Ram Registers -> Void
-(define (opcode-fx1e ram registers)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-fx1e: Ram Registers Byte -> Ram Registers
+(define (opcode-fx1e ram reg x)
+  (values ram (struct-copy registers reg
+                           [i (+ (registers-vn reg x) (registers-i reg))])))
 
 ;;------------------------------------------------------------------------------
 
