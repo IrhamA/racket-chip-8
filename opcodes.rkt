@@ -343,8 +343,11 @@
 ;; ones digit at location i+2.)
 
 ;; opcode-fx33: Ram Registers -> Void
-(define (opcode-fx33 ram registers x)
-  (void)) ;; Remove this void when you write the function body
+(define (opcode-fx33 ram reg x)
+  (begin (set-registers-vn! reg (registers-i reg) (quotient (registers-vn reg x) 100))
+         (set-registers-vn! reg (+ 1 (registers-i reg)) (quotient (modulo (registers-vn reg x) 100) 10))
+         (set-registers-vn! reg (+ 2 (registers-i reg)) (modulo (registers-vn reg x) 10))))
+         
 
 ;;------------------------------------------------------------------------------
 
@@ -353,8 +356,15 @@
 ;; value written, but i itself is left unmodified
 
 ;; opcode-fx55: Ram Registers -> Void
-(define (opcode-fx55 ram registers x)
-  (void)) ;; Remove this void when you write the function body
+(define (opcode-fx55 ram reg)
+  (local [(define (redefine i)
+            (cond [(= i 15) (void)]
+                  [else (begin
+                          (ram-set! ram i (registers-vn reg
+                                                        (+ (registers-i reg)
+                                                               i)))
+                          (redefine (add1 i)))]))]
+    (redefine 0)))
 
 ;;------------------------------------------------------------------------------
 
@@ -363,7 +373,14 @@
 ;; value written, but i itself is left unmodified
 
 ;; opcode-fx65: Ram Registers -> Void
-(define (opcode-fx65 ram registers x)
-  (void)) ;; Remove this void when you write the function body
+(define (opcode-fx65 ram reg)
+  (local [(define (redefine i)
+            (cond [(= i 15) (void)]
+                  [else (begin
+                          (set-registers-vn! reg i (ram-ref ram
+                                                            (+ (registers-i reg)
+                                                                   i)))
+                          (redefine (add1 i)))]))]
+    (redefine 0)))
 
 ;;------------------------------------------------------------------------------
