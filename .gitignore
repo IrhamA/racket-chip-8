@@ -1,4 +1,5 @@
 compiled/
 *.ch8
 *.rom
+.DS_Store
 *~
