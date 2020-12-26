@@ -26,8 +26,8 @@
 
 ;; opcode-00ee: Ram Registers -> Void
 (define (opcode-00ee ram reg)
-  (begin (registers-pc-set! reg (ram-ref ram (registers-sp reg)))
-         (registers-sp-set! reg (sub1 (registers-sp reg)))))
+  (begin (set-registers-pc! reg (ram-ref ram (registers-sp reg)))
+         (set-registers-sp! reg (sub1 (registers-sp reg)))))
 
 ;;------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@
 
 ;; opcode-1nnn: Ram Registers Word -> Void
 (define (opcode-1nnn ram reg nnn)
-  (registers-pc-set! reg nnn))
+  (set-registers-pc! reg nnn))
 
 ;;------------------------------------------------------------------------------
 
@@ -47,8 +47,8 @@
 ;; opcode-2nnn: Ram Registers -> Void
 (define (opcode-2nnn ram reg nnn)
   (begin (ram-set! ram (registers-sp reg) (registers-pc reg))
-         (registers-sp-set! reg (add1 (registers-sp reg)))
-         (registers-pc-set! reg nnn)))
+         (set-registers-sp! reg (add1 (registers-sp reg)))
+         (set-registers-pc! reg nnn)))
 
 ;;------------------------------------------------------------------------------
 
@@ -101,7 +101,7 @@
 
 ;; opcode-7xnn: Ram Registers Byte Byte -> Void
 (define (opcode-7xnn ram reg x nn)
-  (set-registers-vn! reg x (+ (registers-vn reg x) nn))))
+  (set-registers-vn! reg x (+ (registers-vn reg x) nn)))
 
 ;;------------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@
 ;; opcode-8xy2: Ram Registers Byte Byte -> Void
 (define (opcode-8xy2 ram reg x y)
   (set-registers-vn! reg x (bitwise-and (registers-vn reg x)
-                                        (registers-vn reg y)))))
+                                        (registers-vn reg y))))
 
 ;;------------------------------------------------------------------------------
 
@@ -198,7 +198,7 @@
     (if (> (registers-vn x) (registers-vn y))
        (begin (set-registers-vn! reg x 0)
               (set-registers-vn! reg #xf 1))
-       (begin (set-registers-vn! reg x x-y)
+       (begin (set-registers-vn! reg x y-x)
               (set-registers-vn! reg #xf 0)))))
 
 ;;------------------------------------------------------------------------------

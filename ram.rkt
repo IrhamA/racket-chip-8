@@ -34,19 +34,19 @@
 
 ;;------------------------------------------------------------------------------
 
-;; (load-program program offset ram) consumes a Program and an offset number
+;; (load-program! program offset ram) consumes a Program and an offset number
 ;; and returns Ram with the Program loaded in decimal at that offset
 
-;; load-program: Program Nat Ram -> Ram
-(define (load-program program offset ram)
+;; load-program!: Program Nat Ram -> Ram
+(define (load-program! program offset ram)
   (cond [(string=? program "") ram]
         [(> (+ offset (/ (string-length program) 2)) (ram-size ram))
          (error 'load-program "program can't be loaded into memory at +" offset)]
         [else (begin (ram-set! ram offset (hex->dec (substring program 0 2)))
-                     (load-program (substring program 2 (string-length program))
+                     (load-program! (substring program 2 (string-length program))
                                     (add1 offset) ram))]))
 
 ;; Tests:
-(check-error (load-program p 5555555 (make-ram)))
+(check-error (load-program! p 5555555 (make-ram)))
 
 ;;------------------------------------------------------------------------------
