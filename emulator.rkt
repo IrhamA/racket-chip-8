@@ -77,7 +77,7 @@
 ;; Setting up the ram viewer canvas
 (define ram-canvas%
   (class canvas%
-    (super-new)
+    (super-new) 
     (define/override (on-char key-event)
       (let ([keycode (send key-event get-key-code)])
       (cond [(equal? keycode #\space)

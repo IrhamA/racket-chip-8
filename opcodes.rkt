@@ -2,6 +2,7 @@
 
 (require "registers.rkt")
 (require "ram.rkt")
+(require "display.rkt")
 
 (provide (all-defined-out))
 
@@ -16,8 +17,9 @@
 
 ;; (opcode-00e0 ram registers) clears the screen.
 
-;; opcode-00e0: Ram Registers -> Void
-(define (opcode-00e0 ram registers) (void))
+;; opcode-00e0: Ram Registers Display -> Void
+(define (opcode-00e0 ram reg d)
+  (make-display))
 
 ;;------------------------------------------------------------------------------
 
@@ -151,7 +153,7 @@
 ;; To-do: Is the number supposed to be capped at 255?
 
 ;; opcode-8xy4: Ram Registers Byte Byte -> Void
-(define (opcode-8xy4 ram reg x y f)
+(define (opcode-8xy4 ram reg x y)
   (let ([x+y (+ (registers-vn x) (registers-vn y))])
     (if (> x+y 255)
         (begin (set-registers-vn! reg x 255)
@@ -278,7 +280,7 @@
 ;; Vx isn't pressed. Usually the next instruction is a jump to skip a code block.
 
 ;; opcode-exa1: Ram Registers -> Ram Registers
-(define (opcode-exa1 ram registers x)
+(define (opcode-exa1 ram reg x)
   (void)) ;; Remove this void when you write the function body
 
 ;;------------------------------------------------------------------------------
@@ -330,7 +332,7 @@
 ;; font.
 
 ;; opcode-fx29: Ram Registers -> Void
-(define (opcode-fx29 ram registers x)
+(define (opcode-fx29 ram reg x)
   (void)) ;; Remove this void when you write the function body
 
 ;;------------------------------------------------------------------------------
@@ -356,9 +358,9 @@
 ;; value written, but i itself is left unmodified
 
 ;; opcode-fx55: Ram Registers -> Void
-(define (opcode-fx55 ram reg)
+(define (opcode-fx55 ram reg x)
   (local [(define (redefine i)
-            (cond [(= i 15) (void)]
+            (cond [(= i x) (void)]
                   [else (begin
                           (ram-set! ram i (registers-vn reg
                                                         (+ (registers-i reg)
@@ -373,9 +375,9 @@
 ;; value written, but i itself is left unmodified
 
 ;; opcode-fx65: Ram Registers -> Void
-(define (opcode-fx65 ram reg)
+(define (opcode-fx65 ram reg x)
   (local [(define (redefine i)
-            (cond [(= i 15) (void)]
+            (cond [(= i x) (void)]
                   [else (begin
                           (set-registers-vn! reg i (ram-ref ram
                                                             (+ (registers-i reg)
