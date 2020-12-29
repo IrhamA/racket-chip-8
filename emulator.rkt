@@ -1,14 +1,14 @@
 #lang racket/gui
 
+(require "arch.rkt")
+(require "display.rkt")
 (require "ram.rkt")
 (require "registers.rkt")
 (require "util.rkt")
-(require "arch.rkt")
-
-;; To-do: Maybe we should stop doing all this (begin ...) and Void and #:mutable
-;; stuff. It may make the program easier to write but it's unracketlike
 
 ;;------------------------------------------------------------------------------
+
+;; These data definitions apply to all source files in this project:
 
 ;; A Byte is a Nat in the range [0, 255]
 ;; A Word is a Nat in the range [0, 65535]
@@ -34,13 +34,23 @@
 
 ;;------------------------------------------------------------------------------
 
-;; Defaults for th
+;; Basic virtual machine parameters
 
-;; Ram
-(define ram (make-vector 4096 0))
+;; Ram is empty by default
+(define ram (make-ram))
 
-;; Test Registers
+;; Registers
 (define reg (registers 512 0 0 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+
+;; 64x32 display
+(define display (make-vector 256 0))
+
+;;------------------------------------------------------------------------------
+
+;; Special GUI parameters
+
+;; Each pixel will become scale-factor pixels wide in the display window
+(define scale-factor 10)
 
 ;;------------------------------------------------------------------------------
 
@@ -59,20 +69,55 @@
 
 ;;------------------------------------------------------------------------------
 
-;; Ram Viewer window
-(define ram-viewer
+;; Ram viewer window
+(define ram-frame
   (new frame% [label "racket-chip-8: ram-viewer"]
               [width 1010] [height 580]))
 
-;; Creating a new canvas to draw text
+;; Setting up the ram viewer canvas
+(define ram-canvas%
+  (class canvas%
+    (super-new)
+    (define/override (on-char key-event)
+      (let ([keycode (send key-event get-key-code)])
+      (cond [(equal? keycode #\space)
+             (begin (cpu ram reg (void) (void))
+                    (send ram-frame refresh))]
+            [else (void)])))))
+
+;; Creating an instance of the canvas to draw the ram contents
 (define ram-viewer-canvas
-  (new canvas% [parent ram-viewer]
-               [paint-callback
-                (λ (canvas context)
-                  (send context set-font (make-font #:size 8))
-                  (send context set-text-foreground "white")
-                  (draw-ram context ram 0 0))]))
+  (new ram-canvas% [parent ram-frame]
+                   [paint-callback
+                    (λ (canvas context)
+                      (send context set-font (make-font #:size 8))
+                      (send context set-text-foreground "white")
+                      (draw-ram context ram 0 0))]))
+
 ; Set ram viewer background to black
 (send ram-viewer-canvas set-canvas-background (make-object color%))
 
 ;;------------------------------------------------------------------------------
+
+;; Display output window
+(define display-frame
+  (new frame% [label "racket-chip-8: display"]
+                     [width (* display-width scale-factor)]
+                     [height (* display-height scale-factor)]))
+
+;; Setting up the display canvas
+(define display-canvas%
+  (class canvas%
+    (super-new)))
+
+;; Create a new instance of the display canvas
+(define display-canvas
+  (new display-canvas% [parent display-frame]
+                       [paint-callback
+                        (λ (canvas context)
+                          (void))]))
+
+;;------------------------------------------------------------------------------
+
+(send ram-frame show #t)
+(send display-frame show #t)

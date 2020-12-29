@@ -1,10 +1,14 @@
 #lang racket
 
-;; A display is a 2D vector of dimensions 64 x 32
-;;
+(provide (all-defined-out))
+
+;;------------------------------------------------------------------------------
+
+(define display-width 64)
+(define display-height 32)
 
 ;; A Display is a (vectorof Byte)
-(define display (make-vector 0 256))
+(define make-display
+  (λ () (make-vector (/ (* display-width display-height) 8) 0)))
 
-
-
+;;------------------------------------------------------------------------------
