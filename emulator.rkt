@@ -22,42 +22,41 @@
 ;;------------------------------------------------------------------------------
 
 (define pong (string-append
-  "6a026b0c6c3f6d0ca2eadab6dcd66e0022d4660368026060f015f0073000"
-  "121ac717770869ffa2f0d671a2eadab6dcd66001e0a17bfe6004e0a17b02"
-  "601f8b02dab6600ce0a17dfe600de0a17d02601f8d02dcd6a2f0d6718684"
-  "8794603f8602611f871246021278463f1282471f69ff47006901d671122a"
-  "68026301807080b5128a68fe630a807080d53f0112a2610280153f0112ba"
-  "80153f0112c880153f0112c26020f01822d48e3422d4663e3301660368fe"
-  "33016802121679ff49fe69ff12c87901490269016004f0187601464076fe"
-  "126ca2f2fe33f265f12964146500d4557415f229d45500ee808080808080"
-  "800000000000"))
-
+              "6a026b0c6c3f6d0ca2eadab6dcd66e0022d4660368026060f015f0073000"
+              "121ac717770869ffa2f0d671a2eadab6dcd66001e0a17bfe6004e0a17b02"
+              "601f8b02dab6600ce0a17dfe600de0a17d02601f8d02dcd6a2f0d6718684"
+              "8794603f8602611f871246021278463f1282471f69ff47006901d671122a"
+              "68026301807080b5128a68fe630a807080d53f0112a2610280153f0112ba"
+              "80153f0112c880153f0112c26020f01822d48e3422d4663e3301660368fe"
+              "33016802121679ff49fe69ff12c87901490269016004f0187601464076fe"
+              "126ca2f2fe33f265f12964146500d4557415f229d45500ee808080808080"
+              "800000000000"))
+ 
 ;;------------------------------------------------------------------------------
-
+ 
 ;; Basic virtual machine parameters
-
+ 
 ;; Ram is empty by default
 (define ram (make-ram))
-
+ 
 ;; Registers
 (define reg (registers 512 0 0 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
-
+ 
 ;; 64x32 display
-(define display (make-vector 256 0))
-
+(define display (make-display))
+ 
 ;;------------------------------------------------------------------------------
-
+ 
 ;; Special GUI parameters
-
+ 
 ;; Each pixel will become scale-factor pixels wide in the display window
 (define scale-factor 10)
-
+ 
 ;;------------------------------------------------------------------------------
-
+ 
 ;; (draw-ram context ram x y) draws the contents of ram as 1-byte strings in a
 ;; 64x64 byte grid to the given device context, starting at position (x, y)
 
-;; draw-ram: DC Ram Nat Nat -> Void
 (define (draw-ram context ram x y)
   (cond [(equal? (+ x (* y 64)) max-ram) ""]
         [(zero? (modulo (add1 x) 64))
@@ -77,11 +76,11 @@
 ;; Setting up the ram viewer canvas
 (define ram-canvas%
   (class canvas%
-    (super-new) 
+    (super-new)
     (define/override (on-char key-event)
       (let ([keycode (send key-event get-key-code)])
       (cond [(equal? keycode #\space)
-             (begin (cpu ram reg (void) (void))
+             (begin (cpu ram reg display (void))
                     (send ram-frame refresh))]
             [else (void)])))))
 
@@ -94,7 +93,7 @@
                       (send context set-text-foreground "white")
                       (draw-ram context ram 0 0))]))
 
-; Set ram viewer background to black
+;; Set ram viewer background to black
 (send ram-viewer-canvas set-canvas-background (make-object color%))
 
 ;;------------------------------------------------------------------------------
@@ -102,22 +101,20 @@
 ;; Display output window
 (define display-frame
   (new frame% [label "racket-chip-8: display"]
-                     [width (* display-width scale-factor)]
-                     [height (* display-height scale-factor)]))
+              [width (* display-width scale-factor)]
+              [height (* display-height scale-factor)]))
 
 ;; Setting up the display canvas
-(define display-canvas%
-  (class canvas%
+(define display-message%
+  (class message%
     (super-new)))
 
 ;; Create a new instance of the display canvas
-(define display-canvas
-  (new display-canvas% [parent display-frame]
-                       [paint-callback
-                        (λ (canvas context)
-                          (void))]))
+;;(define display-message
+;;  (new display-message% [label (make-object bitmap% display 64 32)]
+;;                        [parent display-frame]))
 
 ;;------------------------------------------------------------------------------
 
 (send ram-frame show #t)
-(send display-frame show #t)
+;; (send display-frame show #t)

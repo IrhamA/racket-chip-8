@@ -1,8 +1,9 @@
 #lang racket
 
+(require "display.rkt")
 (require "registers.rkt")
 (require "ram.rkt")
-(require "display.rkt")
+(require "util.rkt")
 
 (provide (all-defined-out))
 
@@ -15,11 +16,11 @@
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-00e0 ram registers) clears the screen.
+;; (opcode-00e0 ram registers disp) clears the screen.
 
 ;; opcode-00e0: Ram Registers Display -> Void
-(define (opcode-00e0 ram reg d)
-  (make-display))
+(define (opcode-00e0 ram reg disp)
+  (display-clear! disp))
 
 ;;------------------------------------------------------------------------------
 
@@ -28,7 +29,7 @@
 
 ;; opcode-00ee: Ram Registers -> Void
 (define (opcode-00ee ram reg)
-  (begin (set-registers-pc! reg (ram-ref ram (registers-sp reg)))
+  (begin (set-registers-pc! reg (ram-ref ram (registers-sp reg))) ;; TODO: errors here? index out of range
          (set-registers-sp! reg (sub1 (registers-sp reg)))))
 
 ;;------------------------------------------------------------------------------
@@ -254,16 +255,25 @@
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-dxyn ram registers x y n) Draws a sprite at coordinate (Vx, Vy) that
-;; has a width of 8 pixels and a height of n+1 pixels. Each row of 8 pixels
+;; (opcode-dxyn ram registers x y n disp) Draws a sprite at coordinate (Vx, Vy)
+;; that has a width of 8 pixels and a height of n+1 pixels. Each row of 8 pixels
 ;; is read as bit-coded starting from memory location i; i's value doesn’t
-;; change after the execution of this instruction. As described above, Vf
-;; is set to 1 if any screen pixels are flipped from set to unset when the
-;; sprite is drawn, and to 0 if that doesn’t happen.
+;; change after the execution of this instruction. As described above, Vf is set
+;; to 1 if any screen pixels are flipped from set to unset when the sprite is
+;; drawn, and to 0 if that doesn’t happen.
 
-;; opcode-dxyn: Ram Registers -> Void
-(define (opcode-dxyn ram registers x y n)
-  (void)) ;; Remove this void when you write the function body
+;; opcode-dxyn: Ram Registers Byte Byte Byte Display -> Void
+(define (opcode-dxyn ram reg x y n disp)
+  (let* ([index (modulo (+ x (* y display-width)) 8)]
+         [data (ram-ref ram (registers-i reg))]
+         [byte1 (bitwise-shift-right data (modulo x 8))]
+         [byte2 (bitwise-shift-left data (modulo x 8))])
+  (cond [(= n 0) (void)]
+        [else (begin (xor-display-byte! disp index byte1)
+                     (print byte1) (print "\n ")
+                     (print byte2) (print "\n ")
+                     (xor-display-byte! disp (add1 index) byte2)
+                     (opcode-dxyn ram reg x (add1 y) (sub1 n) disp))])))
 
 ;;------------------------------------------------------------------------------
 

@@ -76,5 +76,21 @@
 (check-expect (get-hex-digit-n #x8afe2 0) 2)
 (check-expect (get-hex-digit-n #xa 0) 10)
 (check-expect (get-hex-digit-n #xfccabfdcbd3f619c36bfdcba96dc3baf69da1 26) 3)
-                         
+
+;;------------------------------------------------------------------------------
+
+;; (bitwise-shift-left byte n) shifts a byte left n times
+
+;; bitwise-shift-left: Byte Nat -> Byte
+(define (bitwise-shift-left byte n)
+  (cond [(= 0 n) byte]
+        [else (bitwise-shift-left (modulo (* 2 byte) 256) (sub1 n))]))
+
+;; (bitwise-shift-right byte n) shifts a byte right n times
+
+;; bitwise-shift-right: Byte Nat -> Byte
+(define (bitwise-shift-right byte n)
+  (cond [(= 0 n) byte]
+        [else (bitwise-shift-right (quotient byte 2) (sub1 n))]))
+
 ;;------------------------------------------------------------------------------

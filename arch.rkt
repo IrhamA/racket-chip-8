@@ -16,7 +16,7 @@
   (let* ([pc (registers-pc reg)]
          [opcode (+ (* 256 (ram-ref ram pc)) (ram-ref ram (add1 pc)))])
   (begin
-    (cond [(equal? #x00e0 opcode) (opcode-00e0 ram reg)] ; 00e0
+    (cond [(equal? #x00e0 opcode) (opcode-00e0 ram reg display)] ; 00e0
           [(equal? #x00ee opcode) (opcode-00ee ram reg)] ; 00ee
           [((pred-mnnn #x0) opcode) (opcode-0nnn ram reg opcode)] ; 0nnn
           [((pred-mnnn #x1) opcode) (opcode-1nnn ram reg (modulo opcode #x1000))] ; 1nnn
@@ -39,7 +39,7 @@
           [((pred-mnnn #xa) opcode) (opcode-annn ram reg (modulo opcode #xa000))] ; annn
           [((pred-mnnn #xb) opcode) (opcode-bnnn ram reg (modulo opcode #xb000))] ; bnnn
           [((pred-mnnn #xc) opcode) (opcode-cxnn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; cxnn
-          [((pred-mnnn #xd) opcode) (opcode-dxyn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010) (bitwise-and opcode #x000f))] ; dxyn
+          [((pred-mnnn #xd) opcode) (opcode-dxyn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010) (bitwise-and opcode #x000f) display)] ; dxyn
           [((pred-sxtt #xe #x9e) opcode) (opcode-ex9e ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; ex9e
           [((pred-sxtt #xe #xa1) opcode) (opcode-exa1 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; exa1
           [((pred-sxtt #xf #x07) opcode) (opcode-fx07 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx07
