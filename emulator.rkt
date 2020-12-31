@@ -5,6 +5,7 @@
 (require "ram.rkt")
 (require "registers.rkt")
 (require "util.rkt")
+(require "games/converted.rkt")
 
 ;;------------------------------------------------------------------------------
 
@@ -43,8 +44,10 @@
 (define reg (registers 512 0 0 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
  
 ;; 64x32 display
-(define display (make-display))
- 
+(define disp (make-display))
+
+(load-program! pong 512 ram)
+
 ;;------------------------------------------------------------------------------
  
 ;; Special GUI parameters
@@ -80,8 +83,10 @@
     (define/override (on-char key-event)
       (let ([keycode (send key-event get-key-code)])
       (cond [(equal? keycode #\space)
-             (begin (cpu ram reg display (void))
-                    (send ram-frame refresh))]
+             (begin (cpu ram reg disp (void))
+                    (send ram-frame refresh)
+                    (display reg)
+                    (display #\newline))]
             [else (void)])))))
 
 ;; Creating an instance of the canvas to draw the ram contents

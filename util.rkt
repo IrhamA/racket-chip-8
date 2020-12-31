@@ -57,7 +57,6 @@
   (let ([str (number->string num 16)])
     (if (< (string-length str) 2)
         (string-append "0" str) str)))
-  
 
 ;; Tests:
 (check-expect (dec->hex 65535) "ffff")

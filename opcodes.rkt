@@ -12,7 +12,8 @@
 ;; (opcode-0nnn ram registers nnn) calls machine code routine at address nnn.
 
 ;; opcode-0nnn: Ram Registers -> Void
-(define (opcode-0nnn ram registers nnn) (void))
+(define (opcode-0nnn ram registers nnn)
+  (begin (display "Jump to invalid address: ") (display nnn)))
 
 ;;------------------------------------------------------------------------------
 
@@ -29,8 +30,9 @@
 
 ;; opcode-00ee: Ram Registers -> Void
 (define (opcode-00ee ram reg)
-  (begin (set-registers-pc! reg (ram-ref ram (registers-sp reg))) ;; TODO: errors here? index out of range
-         (set-registers-sp! reg (sub1 (registers-sp reg)))))
+  (begin (set-registers-sp! reg (- (registers-sp reg) 2))
+         (set-registers-pc! reg (+ (* (ram-ref ram (registers-sp reg)) #x100)
+                                   (ram-ref ram (add1 (registers-sp reg)))))))
 
 ;;------------------------------------------------------------------------------
 
@@ -49,8 +51,11 @@
 
 ;; opcode-2nnn: Ram Registers -> Void
 (define (opcode-2nnn ram reg nnn)
-  (begin (ram-set! ram (registers-sp reg) (registers-pc reg))
-         (set-registers-sp! reg (add1 (registers-sp reg)))
+  (begin (ram-set! ram (registers-sp reg)
+           (quotient (bitwise-and (registers-pc reg) #xff00) #x100))
+         (ram-set! ram (add1 (registers-sp reg))
+           (bitwise-and (registers-pc reg) #xff))
+         (set-registers-sp! reg (+ 2 (registers-sp reg)))
          (set-registers-pc! reg nnn)))
 
 ;;------------------------------------------------------------------------------
@@ -270,8 +275,6 @@
          [byte2 (bitwise-shift-left data (modulo x 8))])
   (cond [(= n 0) (void)]
         [else (begin (xor-display-byte! disp index byte1)
-                     (print byte1) (print "\n ")
-                     (print byte2) (print "\n ")
                      (xor-display-byte! disp (add1 index) byte2)
                      (opcode-dxyn ram reg x (add1 y) (sub1 n) disp))])))
 
@@ -304,7 +307,7 @@
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-fx0a ram registers) a key press is awaited, and then stored in Vx.
-;; (Blocking Operation. All instruction halted until next key event)
+;; (Blocking Operation. p next key event)
 
 ;; opcode-fx0a: Ram Registers Byte -> Ram Registers
 (define (opcode-fx0a ram reg x)

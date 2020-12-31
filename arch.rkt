@@ -1,8 +1,11 @@
 #lang racket
 
+(require "disassemble.rkt")
 (require "opcodes.rkt")
 (require "ram.rkt")
 (require "registers.rkt")
+(require "util.rkt")
+
 
 (provide (all-defined-out))
 
@@ -12,15 +15,15 @@
 ;; To-do: This is the worst thing I have ever seen or written in Racket
 
 ;; cpu: Ram Registers -> Void
-(define (cpu ram reg display input)
+(define (cpu ram reg disp input)
   (let* ([pc (registers-pc reg)]
          [opcode (+ (* 256 (ram-ref ram pc)) (ram-ref ram (add1 pc)))])
   (begin
-    (cond [(equal? #x00e0 opcode) (opcode-00e0 ram reg display)] ; 00e0
+    (cond [(equal? #x00e0 opcode) (opcode-00e0 ram reg disp)] ; 00e0
           [(equal? #x00ee opcode) (opcode-00ee ram reg)] ; 00ee
           [((pred-mnnn #x0) opcode) (opcode-0nnn ram reg opcode)] ; 0nnn
           [((pred-mnnn #x1) opcode) (opcode-1nnn ram reg (modulo opcode #x1000))] ; 1nnn
-          [((pred-mnnn #x2) opcode) (opcode-2nnn ram reg (modulo opcode #x2000))] ; 2nnn 
+          [((pred-mnnn #x2) opcode) (opcode-2nnn ram reg (modulo opcode #x1000))] ; 2nnn 
           [((pred-mnnn #x3) opcode) (opcode-3xnn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 3xnn
           [((pred-mnnn #x4) opcode) (opcode-4xnn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; 4xnn
           [((pred-pnnq #x5 #x0) opcode) (opcode-5xy0 ram reg (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010))] ; 5xy0
@@ -39,7 +42,7 @@
           [((pred-mnnn #xa) opcode) (opcode-annn ram reg (modulo opcode #xa000))] ; annn
           [((pred-mnnn #xb) opcode) (opcode-bnnn ram reg (modulo opcode #xb000))] ; bnnn
           [((pred-mnnn #xc) opcode) (opcode-cxnn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (bitwise-and opcode #x00ff))] ; cxnn
-          [((pred-mnnn #xd) opcode) (opcode-dxyn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010) (bitwise-and opcode #x000f) display)] ; dxyn
+          [((pred-mnnn #xd) opcode) (opcode-dxyn ram reg (/ (bitwise-and opcode #x0f00) #x0100) (/ (bitwise-and opcode #x00f0) #x0010) (bitwise-and opcode #x000f) disp)] ; dxyn
           [((pred-sxtt #xe #x9e) opcode) (opcode-ex9e ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; ex9e
           [((pred-sxtt #xe #xa1) opcode) (opcode-exa1 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; exa1
           [((pred-sxtt #xf #x07) opcode) (opcode-fx07 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx07
@@ -51,39 +54,8 @@
           [((pred-sxtt #xf #x33) opcode) (opcode-fx33 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx33
           [((pred-sxtt #xf #x55) opcode) (opcode-fx55 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx55
           [((pred-sxtt #xf #x65) opcode) (opcode-fx65 ram reg (/ (bitwise-and opcode #x0f00) #x0100))]) ; fx65
-    (set-registers-pc! reg (+ 2 pc)))))
-
-;;------------------------------------------------------------------------------
-
-;; (pred-mnnn m) returns a predicate that checks if the opcode is of the form
-;; mnnn where m is a constant
-
-;; pred-mnnn: Nat -> (Nat -> Bool)
-(define (pred-mnnn m)
-  (λ (opcode)
-    (and (<= opcode (+ (* m #x1000) #x0fff))
-         (>= opcode (* m #x1000)))))
-
-;;------------------------------------------------------------------------------
-
-;; (pred-pnnq p q) returns a predicate that checks if the opcode is of the form
-;; pnnq where p and q are constants
-
-;; pred-pnnq: Nat Nat -> (Nat -> Bool)
-(define (pred-pnnq p q)
-  (λ (opcode)
-    (and (<= opcode (+ (* p #x1000) #x0ff0 q))
-         (>= opcode (+ (* p #x1000) q)))))
-
-;;------------------------------------------------------------------------------
-
-;; (pred-sxtt) returns a predicate that checks if the opcode is of the form sxtt
-;; where s and tt are constants
-
-;; pred-sxtt: Nat Nat -> (Nat -> Bool)
-(define (pred-sxtt s tt)
-  (λ (opcode)
-    (and (<= opcode (+ (* s #x1000) #x0f00 tt))
-         (>= opcode (+ (* s #x1000) tt)))))
+    (set-registers-pc! reg (+ 2 (registers-pc reg)))
+    (display (format "~a: ~a" (dec->hex opcode) (disassembler (ram-ref ram pc) (ram-ref ram (add1 pc)))))
+    (display #\newline))))
 
 ;;------------------------------------------------------------------------------
