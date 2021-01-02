@@ -68,8 +68,7 @@
 ;; pred-mnnn: Nat -> (Nat -> Bool)
 (define (pred-mnnn m)
   (λ (opcode)
-    (and (<= opcode (+ (* m #x1000) #x0fff))
-         (>= opcode (* m #x1000)))))
+    (equal? (quotient opcode #x1000) m)))
 
 ;;------------------------------------------------------------------------------
 
@@ -79,8 +78,8 @@
 ;; pred-pnnq: Nat Nat -> (Nat -> Bool)
 (define (pred-pnnq p q)
   (λ (opcode)
-    (and (<= opcode (+ (* p #x1000) #x0ff0 q))
-         (>= opcode (+ (* p #x1000) q)))))
+    (and (equal? (quotient opcode #x1000) p)
+         (equal? (bitwise-and opcode #x000f) q))))
 
 ;;------------------------------------------------------------------------------
 
@@ -90,7 +89,7 @@
 ;; pred-sxtt: Nat Nat -> (Nat -> Bool)
 (define (pred-sxtt s tt)
   (λ (opcode)
-    (and (<= opcode (+ (* s #x1000) #x0f00 tt))
-         (>= opcode (+ (* s #x1000) tt)))))
+      (and (equal? (bitwise-and opcode #x00ff) tt)
+           (equal? (quotient opcode #x1000) s))))
 
 ;;------------------------------------------------------------------------------

@@ -41,7 +41,7 @@
 (define ram (make-ram))
  
 ;; Registers
-(define reg (registers 512 0 0 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
+(define reg (registers 512 0 #xf00 0 0 (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)))
  
 ;; 64x32 display
 (define disp (make-display))
@@ -61,7 +61,7 @@
 ;; 64x64 byte grid to the given device context, starting at position (x, y)
 
 (define (draw-ram context ram x y)
-  (cond [(equal? (+ x (* y 64)) max-ram) ""]
+   (cond [(equal? (+ x (* y 64)) max-ram) ""]
         [(zero? (modulo (add1 x) 64))
          (draw-ram context ram (modulo (add1 x) 64) (add1 y))]
         [else (begin

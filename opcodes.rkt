@@ -348,6 +348,103 @@
 (define (opcode-fx29 ram reg x)
   (void)) ;; Remove this void when you write the function body
 
+;; Bitfields for character glyphs
+(define char-0 (list #b00111100
+                     #b00100100
+                     #b00100100
+                     #b00100100
+                     #b00111100))
+
+(define char-1 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-2 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-3 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-4 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-5 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-6 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-7 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-8 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-9 (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-a (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-b (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-c (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-d (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-e (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
+(define char-f (list #b00111000
+                     #b00001000
+                     #b00001000
+                     #b00001000
+                     #b00111100))
+
 ;;------------------------------------------------------------------------------
 
 ;; (opcode-fx33 ram registers x) stores the binary-coded decimal representation
@@ -359,10 +456,9 @@
 
 ;; opcode-fx33: Ram Registers -> Void
 (define (opcode-fx33 ram reg x)
-  (begin (set-registers-vn! reg (registers-i reg) (quotient (registers-vn reg x) 100))
-         (set-registers-vn! reg (+ 1 (registers-i reg)) (quotient (modulo (registers-vn reg x) 100) 10))
-         (set-registers-vn! reg (+ 2 (registers-i reg)) (modulo (registers-vn reg x) 10))))
-         
+  (begin (ram-set! ram (registers-i reg) (quotient (registers-vn reg x) 100))
+         (ram-set! ram (+ 1 (registers-i reg)) (quotient (modulo (registers-vn reg x) 100) 10))
+         (ram-set! ram (+ 2 (registers-i reg)) (modulo (registers-vn reg x) 10))))
 
 ;;------------------------------------------------------------------------------
 

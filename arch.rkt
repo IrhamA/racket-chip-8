@@ -19,6 +19,8 @@
   (let* ([pc (registers-pc reg)]
          [opcode (+ (* 256 (ram-ref ram pc)) (ram-ref ram (add1 pc)))])
   (begin
+    (display (format "~a: ~a" (dec->hex opcode) (disassembler (ram-ref ram pc) (ram-ref ram (add1 pc)))))
+    (display #\newline)
     (cond [(equal? #x00e0 opcode) (opcode-00e0 ram reg disp)] ; 00e0
           [(equal? #x00ee opcode) (opcode-00ee ram reg)] ; 00ee
           [((pred-mnnn #x0) opcode) (opcode-0nnn ram reg opcode)] ; 0nnn
@@ -54,8 +56,6 @@
           [((pred-sxtt #xf #x33) opcode) (opcode-fx33 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx33
           [((pred-sxtt #xf #x55) opcode) (opcode-fx55 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx55
           [((pred-sxtt #xf #x65) opcode) (opcode-fx65 ram reg (/ (bitwise-and opcode #x0f00) #x0100))]) ; fx65
-    (set-registers-pc! reg (+ 2 (registers-pc reg)))
-    (display (format "~a: ~a" (dec->hex opcode) (disassembler (ram-ref ram pc) (ram-ref ram (add1 pc)))))
-    (display #\newline))))
+    (set-registers-pc! reg (+ 2 (registers-pc reg))))))
 
 ;;------------------------------------------------------------------------------
