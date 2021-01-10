@@ -1,6 +1,7 @@
 #lang racket/gui
 
 (require "arch.rkt")
+(require "disassemble.rkt")
 (require "display.rkt")
 (require "ram.rkt")
 (require "registers.rkt")
@@ -32,6 +33,8 @@
               "33016802121679ff49fe69ff12c87901490269016004f0187601464076fe"
               "126ca2f2fe33f265f12964146500d4557415f229d45500ee808080808080"
               "800000000000"))
+
+(define test "613e620e630af329d125")
  
 ;;------------------------------------------------------------------------------
  
@@ -46,7 +49,8 @@
 ;; 64x32 display
 (define disp (make-display))
 
-(load-program! pong 512 ram)
+(load-program! puzzle 512 ram)
+(init-cpu! ram reg disp (void))
 
 ;;------------------------------------------------------------------------------
  
@@ -60,14 +64,37 @@
 ;; (draw-ram context ram x y) draws the contents of ram as 1-byte strings in a
 ;; 64x64 byte grid to the given device context, starting at position (x, y)
 
+;; draw-ram: DC Ram Nat Nat -> Void
 (define (draw-ram context ram x y)
    (cond [(equal? (+ x (* y 64)) max-ram) ""]
-        [(zero? (modulo (add1 x) 64))
-         (draw-ram context ram (modulo (add1 x) 64) (add1 y))]
-        [else (begin
+         [(zero? (modulo (add1 x) 64))
+          (draw-ram context ram (modulo (add1 x) 64) (add1 y))]
+         [else (begin
           (send context draw-text (dec->hex (ram-ref ram (+ x (* y 64))))
                 (* x 16) (* y 9))
           (draw-ram context ram (add1 x) y))]))
+
+;;------------------------------------------------------------------------------
+
+;; (key-handler! key-event) updates all frames and steps the cpu if the provided
+;; key-event is a spacebar press.
+
+;; key-handler!: KeyEvent -> Void
+(define (key-handler! key-event)
+  (let ([keycode (send key-event get-key-code)])
+    (cond [(equal? keycode #\space) (update)]
+          [else (void)])))
+
+;;------------------------------------------------------------------------------
+
+;; (update) updates the cpu
+
+;; uodate: Void -> Void
+(define (update)
+  (begin (cpu! ram reg disp (void))
+         ;; (send ram-frame refresh)
+         (send display-frame refresh)
+         (sleep/yield 1/1000)))
 
 ;;------------------------------------------------------------------------------
 
@@ -76,18 +103,11 @@
   (new frame% [label "racket-chip-8: ram-viewer"]
               [width 1010] [height 580]))
 
-;; Setting up the ram viewer canvas
+;; Ram viewer canvas
 (define ram-canvas%
   (class canvas%
     (super-new)
-    (define/override (on-char key-event)
-      (let ([keycode (send key-event get-key-code)])
-      (cond [(equal? keycode #\space)
-             (begin (cpu ram reg disp (void))
-                    (send ram-frame refresh)
-                    (display reg)
-                    (display #\newline))]
-            [else (void)])))))
+    (define/override (on-char key-event) (key-handler! key-event))))
 
 ;; Creating an instance of the canvas to draw the ram contents
 (define ram-viewer-canvas
@@ -110,16 +130,30 @@
               [height (* display-height scale-factor)]))
 
 ;; Setting up the display canvas
-(define display-message%
-  (class message%
-    (super-new)))
+(define display-canvas%
+  (class canvas%
+    (super-new)
+    (define/override (on-char key-event) (key-handler! key-event))))
 
 ;; Create a new instance of the display canvas
-;;(define display-message
-;;  (new display-message% [label (make-object bitmap% display 64 32)]
-;;                        [parent display-frame]))
+(define display-canvas
+  (new display-canvas% [parent display-frame]
+                       [paint-callback
+                        (λ (canvas context)
+                          (send context set-scale scale-factor scale-factor)
+                          (send context draw-bitmap (make-object bitmap% disp 64 32) 0 0))]))
+
+;; Set display output background to black
+(send display-canvas set-canvas-background (make-object color%))
 
 ;;------------------------------------------------------------------------------
 
-(send ram-frame show #t)
-;; (send display-frame show #t)
+;; (send ram-frame show #t)
+(send display-frame show #t)
+
+;;------------------------------------------------------------------------------
+
+(define (main)
+  (begin (update) (main)))
+
+;;------------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 ;;------------------------------------------------------------------------------
 
 ;; A Registers is a
-;; (make-registers Word Word Byte Byte Byte (vectorof Byte)
+;; (make-registers Word Word Word Byte Byte (vectorof Byte)
 (define-struct registers (pc i sp dt st v) #:transparent #:mutable)
 
 ;; The structure fields correspond to these registers:

@@ -5,13 +5,12 @@
 
 (provide (all-defined-out))
 
-;; (disassembler a b) Takes two bytes (a and b) and returns
+;; (disassemble a b) Takes two bytes (a and b) and returns
 ;; the corresponding string relating to (connect a b)
 
-;; disassembler: Byte Byte -> Str
-(define (disassembler a b)
+;; disassemble: Byte Byte -> Str
+(define (disassemble a b)
   (let* ([connect (+ (* 256 a) b)])
-    
     (cond [(equal? #x00e0 connect) "CLS"] ; 00e0
           [(equal? #x00ee connect) "RET"] ; 00ee
           [((pred-mnnn #x0) connect) (format "SYS ~a" (number->string connect)) ] ; 0nnn
@@ -56,8 +55,9 @@
 ;; connect-d: Ram Nat Nat -> String
 (define (connect-d ram s e)
   (cond [(= s e) ""]
-        [else (string-append (disassembler (vector-ref ram s)
-                                           (vector-ref ram (add1 s)))
+        [else (string-append (number->string s) ": " (disassemble (vector-ref ram s)
+                                                 (vector-ref ram (add1 s)))
+                             "\n"
                              (connect-d ram (+ 2 s) e))]))
 
 ;;------------------------------------------------------------------------------
