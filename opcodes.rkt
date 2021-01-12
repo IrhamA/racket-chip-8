@@ -298,10 +298,10 @@
 
 ;;------------------------------------------------------------------------------
 
-;; (opcode-fx07 ram registers x) sets Vx to the value of the delay timer.
+;; (opcode-fx07 registers x) sets Vx to the value of the delay timer.
 
-;; opcode-fx07: Ram Registers Byte -> Void
-(define (opcode-fx07 ram reg x)
+;; opcode-fx07: Registers Byte -> Void
+(define (opcode-fx07 reg x)
   (set-registers-vn! reg x (registers-dt reg)))
 
 ;;------------------------------------------------------------------------------

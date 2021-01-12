@@ -58,8 +58,6 @@
           [((pred-sxtt #xf #x33) opcode) (opcode-fx33 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx33
           [((pred-sxtt #xf #x55) opcode) (opcode-fx55 ram reg (/ (bitwise-and opcode #x0f00) #x0100))] ; fx55
           [((pred-sxtt #xf #x65) opcode) (opcode-fx65 ram reg (/ (bitwise-and opcode #x0f00) #x0100))]) ; fx65
-    ;; (display reg)
-    ;; (display #\newline)
     (set-registers-pc! reg (+ 2 (registers-pc reg))))))
 
 ;;------------------------------------------------------------------------------

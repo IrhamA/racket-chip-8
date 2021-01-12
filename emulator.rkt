@@ -49,8 +49,11 @@
 ;; 64x32 display
 (define disp (make-display))
 
-(load-program! puzzle 512 ram)
+(load-program! pong 512 ram)
 (init-cpu! ram reg disp (void))
+
+(define file-len 50)
+(define last-sound-time (current-milliseconds))
 
 ;;------------------------------------------------------------------------------
  
@@ -82,7 +85,7 @@
 ;; key-handler!: KeyEvent -> Void
 (define (key-handler! key-event)
   (let ([keycode (send key-event get-key-code)])
-    (cond [(equal? keycode #\space) (update)]
+    (cond [(equal? keycode #\space) (void)]
           [else (void)])))
 
 ;;------------------------------------------------------------------------------
@@ -94,6 +97,10 @@
   (begin (cpu! ram reg disp (void))
          ;; (send ram-frame refresh)
          (send display-frame refresh)
+         (if (and (> (registers-st reg) 0)
+                  (> (- (current-milliseconds) last-sound-time) file-len))
+             (begin (play-sound "beep2.wav" true)
+                    (set! last-sound-time (current-milliseconds))) (void))
          (sleep/yield 1/1000)))
 
 ;;------------------------------------------------------------------------------
@@ -153,7 +160,8 @@
 
 ;;------------------------------------------------------------------------------
 
-(define (main)
-  (begin (update) (main)))
+(define (main n)
+  (if (zero? n) (void)
+  (begin (update) (main (sub1 n)))))
 
 ;;------------------------------------------------------------------------------
