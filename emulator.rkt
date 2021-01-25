@@ -6,7 +6,7 @@
 (require "ram.rkt")
 (require "registers.rkt")
 (require "util.rkt")
-(require "games/converted.rkt")
+(require "converted.rkt")
 
 ;;------------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@
          (send display-frame refresh)
          (if (and (> (registers-st reg) 0)
                   (> (- (current-milliseconds) last-sound-time) file-len))
-             (begin (play-sound "beep2.wav" true)
+             (begin (play-sound "resource/beep.wav" true)
                     (set! last-sound-time (current-milliseconds))) (void))
          (sleep/yield 1/1000)))
 
@@ -160,8 +160,9 @@
 
 ;;------------------------------------------------------------------------------
 
-(define (main n)
-  (if (zero? n) (void)
-  (begin (update) (main (sub1 n)))))
+(define (main)
+  (begin (update) (main)))
+
+(main)
 
 ;;------------------------------------------------------------------------------

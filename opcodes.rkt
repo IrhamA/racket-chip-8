@@ -266,14 +266,18 @@
 
 ;; opcode-dxyn: Ram Registers Byte Byte Byte Display -> Void
 (define (opcode-dxyn ram reg x y n disp)
-  (letrec ([main (λ (acc)
-            (let ([data (ram-ref ram (+ acc (registers-i reg)))]
-                  [index (+ (quotient (registers-vn reg x) 8) (* (+ (registers-vn reg y) acc) 8))])
-            (if (equal? acc (add1 n)) (void)
-                (begin (xor-display-byte! disp index (bitwise-shift-right data (modulo (registers-vn reg x) 8)))
-                       (xor-display-byte! disp (add1 index) (bitwise-shift-left data (- 8 (modulo (registers-vn reg x) 8))))
-                       (main (add1 acc))))))])
-    (main 0))) ;; To-do: fix shifting and positioning
+  (letrec ([byte-x (quotient (registers-vn reg x) 8)]
+           [byte-y (registers-vn reg y)]
+           [f (λ (bx by) (+ (modulo bx 8) (* (modulo by display-height) 8)))]
+           [main (λ (yi)
+             (let ([data (ram-ref ram (+ yi (registers-i reg)))]
+                   [shift (modulo (registers-vn reg x) 8)])
+             (if (= n yi) (void)
+                 (begin (xor-display-byte! disp (f byte-x (+ yi byte-y)) (bitwise-shift-right data shift))
+                        (xor-display-byte! disp (f (add1 byte-x) (+ yi byte-y)) (bitwise-shift-left data (- 8 shift)))
+                        (main (add1 yi))))))])
+  (main 0)))
+
 
 ;; (if (equal? data #b11111111) (void) (set-registers-vn! reg #xf 1))))])
 ;; (set-registers-vn! reg #xf 0)
