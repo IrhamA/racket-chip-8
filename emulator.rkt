@@ -148,7 +148,8 @@
                        [paint-callback
                         (λ (canvas context)
                           (send context set-scale scale-factor scale-factor)
-                          (send context draw-bitmap (make-object bitmap% disp 64 32) 0 0))]))
+                          ;;(send context draw-bitmap (make-object bitmap% disp 64 32) 0 0))]))
+                          (send context draw-bitmap (generate-bitmap disp) 0 0))]))
 
 ;; Set display output background to black
 (send display-canvas set-canvas-background (make-object color%))
